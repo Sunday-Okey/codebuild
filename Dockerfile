@@ -1,17 +1,23 @@
 FROM python:3.10-slim-buster
 
-USER root
-
+# Set working directory
 WORKDIR /src
 
-COPY ./requirements.txt requirements.txt
+# Install dependencies for psycopg2
+RUN apt update && \
+    apt install -y build-essential libpq-dev && \
+    rm -rf /var/lib/apt/lists/*
 
-# Dependencies required for psycopg2 (used for Postgres client)
-RUN apt update -y && apt install -y build-essential libpq-dev
+# Copy requirements file and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Dependencies are installed during build time in the container itself so we don't have OS mismatch
-RUN pip install -r requirements.txt
-
+# Copy application code
 COPY . .
 
+# Switch to a non-root user if your app allows it (optional but recommended)
+# RUN adduser --disabled-password appuser && chown -R appuser /src
+# USER appuser
+
+# Default command
 CMD ["python", "app.py"]
